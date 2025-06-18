@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package todo.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "todo01/gen/go/proto/todo/v1;todov1";
+
+// Todo represents a single todo item
+message Todo {
+  int64 id = 1;
+  string title = 2;
+  string description = 3;
+  google.protobuf.Timestamp due_date = 4;
+  TodoStatus status = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// TodoStatus represents the status of a todo item
+enum TodoStatus {
+  TODO_STATUS_UNSPECIFIED = 0;
+  TODO_STATUS_PENDING = 1;
+  TODO_STATUS_COMPLETED = 2;
+}
+
+// CreateTodoRequest represents a request to create a new todo
+message CreateTodoRequest {
+  string title = 1;
+  string description = 2;
+  google.protobuf.Timestamp due_date = 3;
+}
+
+// CreateTodoResponse represents a response to creating a todo
+message CreateTodoResponse {
+  Todo todo = 1;
+}
+
+// UpdateTodoRequest represents a request to update a todo
+message UpdateTodoRequest {
+  int64 id = 1;
+  string title = 2;
+  string description = 3;
+  google.protobuf.Timestamp due_date = 4;
+  TodoStatus status = 5;
+}
+
+// UpdateTodoResponse represents a response to updating a todo
+message UpdateTodoResponse {
+  Todo todo = 1;
+}
+
+// DeleteTodoRequest represents a request to delete a todo
+message DeleteTodoRequest {
+  int64 id = 1;
+}
+
+// DeleteTodoResponse represents a response to deleting a todo
+message DeleteTodoResponse {}
+
+// ListTodosRequest represents a request to list todos
+message ListTodosRequest {
+  TodoStatus status = 1;
+}
+
+// ListTodosResponse represents a response to listing todos
+message ListTodosResponse {
+  repeated Todo todos = 1;
+}
+
+// TodoService provides operations for managing todos
+service TodoService {
+  // CreateTodo creates a new todo
+  rpc CreateTodo(CreateTodoRequest) returns (CreateTodoResponse) {}
+  // UpdateTodo updates an existing todo
+  rpc UpdateTodo(UpdateTodoRequest) returns (UpdateTodoResponse) {}
+  // DeleteTodo deletes a todo
+  rpc DeleteTodo(DeleteTodoRequest) returns (DeleteTodoResponse) {}
+  // ListTodos lists all todos
+  rpc ListTodos(ListTodosRequest) returns (ListTodosResponse) {}
+}
