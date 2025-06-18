@@ -1,60 +1,88 @@
-# TODOアプリケーション（Go + connect-go + MySQL）
+ifeq ($(OS),Windows_NT)
+    DOCKER_EXEC_FLAGS = -it
+else
+    ifeq ($(CI),true)
+        DOCKER_EXEC_FLAGS = -i
+    else
+        DOCKER_EXEC_FLAGS = -it
+    endif
+endif
 
-## 概要
-Go, connect-go, MySQL, sqlboiler, slog, buf などを用いたgRPCベースのTODO管理アプリです。
+ifeq ($(OS),Windows_NT)
+  RM_BIN = if exist bin rmdir /s /q bin
+  MKDIR_BIN = mkdir bin
+else
+  RM_BIN = rm -rf bin
+  MKDIR_BIN = mkdir bin
+endif
 
-## ディレクトリ構成
-```
-todo01/
-├── cmd/            # エントリーポイント（server, client）
-├── internal/       # DB, handler, repository, models
-├── proto/          # Protocol Buffers定義
-├── migrations/     # DBマイグレーション
-├── gen/            # 生成コード（sqlboiler, protobuf）
-├── Makefile        # ビルド・開発コマンド
-├── Dockerfile      # Dockerビルド
-├── docker-compose.yml # サービス一括起動
-└── README.md       # このファイル
-```
+.PHONY: build generate test docker-build docker-up docker-down setup init docker-mysql start-server start-client
 
-## セットアップ手順
+# Build the application
+build:
+	$(RM_BIN)
+	$(MKDIR_BIN)
+	go build -o bin/server.exe ./cmd/server
+	go build -o bin/client.exe ./cmd/client
 
-### 1. 必要ツールのインストール
-- Go（最新版推奨）
-- Docker / Docker Compose
-- [sqlboiler](https://github.com/volatiletech/sqlboiler) & ドライバ
-- [buf](https://buf.build/)
+# Generate SQLBoiler models
+generate:
+	buf generate
+	go mod tidy
+	sqlboiler mysql --wipe --config sqlboiler.toml --output gen/db --pkgname db
 
-#### sqlboiler, bufのインストール
-```
-make setup
-```
+# Run tests
+test:
+	go test -v ./internal/repository
 
-### 2. MySQLサーバーの起動
-```
-make docker-mysql
-```
+docker-build:
+	docker compose build
 
-### 3. 生成コードの作成
-- Protobuf/Connect, sqlboilerモデル生成
-```
-make generate
-```
+docker-up:
+	docker compose up -d
 
-### 4. ビルド
-```
-make build
-```
+docker-down:
+	docker compose down
 
-### 5. サーバー起動
-```
-make start-server
-```
+docker-mysql:
+	@echo Starting MySQL container...
+	docker compose up -d mysql
+	@echo Waiting for MySQL to be ready...
+	@setlocal ENABLEDELAYEDEXPANSION && \
+	for /L %%i in (1,1,30) do ( \
+		docker exec todo01-mysql-1 mysqladmin ping -h127.0.0.1 -uroot -proot --silent >nul 2>&1 && ( \
+			echo MySQL is ready! && exit /b 0 \
+		) || ( \
+			echo Waiting for MySQL to be ready... && ping -n 3 127.0.0.1 >nul \
+		) \
+	)
 
-### 6. クライアントの方でCRUDの操作
-```
-make client-create
-make client-list
-make client-update
-make client-delete
-```
+# Development setup
+setup:
+	go install github.com/volatiletech/sqlboiler/v4@latest
+	go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-mysql@latest
+	go install github.com/bufbuild/buf/cmd/buf@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@latest
+	go mod tidy
+
+test-db:
+	echo "test"
+
+start-server:
+	./bin/server.exe
+
+client-create:
+	./bin/client.exe -action=create -title="Test Task" -description="This is a test" -due-date=2024-07-01
+
+client-list:
+	./bin/client.exe -action=list
+
+client-update:
+	./bin/client.exe -action=update -id=1 -title="Updated Task" -description="Updated description" -status=completed
+
+client-delete:
+	./bin/client.exe -action=delete -id=1
+
+
+
