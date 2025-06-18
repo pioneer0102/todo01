@@ -1,0 +1,7 @@
+gen/
+bin/
+*.exe
+*.out
+*.test
+*.log
+coverage/ 
