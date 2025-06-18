@@ -57,7 +57,7 @@ make start-server
 {"time":"2025-06-18T20:25:10.3512634+09:00","level":"INFO","msg":"Starting server","addr":":8080"}
 ```
 
-CRUD操作を行うため、別のPowerShellターミナルを開いてください。
+クライアントでのCRUD操作を行うため、別のPowerShellターミナルを開いてください。
 
 ### 6. クライアントでのCRUD操作
 ```
