@@ -50,8 +50,16 @@ make build
 ```
 make start-server
 ```
+実行結果列:
+```
+./bin/server.exe
+{"time":"2025-06-18T20:25:10.3507316+09:00","level":"INFO","msg":"Successfully connected to database","host":"localhost","port":"3306","database":"todo"}
+{"time":"2025-06-18T20:25:10.3512634+09:00","level":"INFO","msg":"Starting server","addr":":8080"}
+```
 
-### 6. クライアントの方でCRUDの操作
+CRUD操作を行うため、別のPowerShellターミナルを開いてください。
+
+### 6. クライアントでのCRUD操作
 ```
 make client-create
 make client-list
