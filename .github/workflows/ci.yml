@@ -1,0 +1,53 @@
+name: Go CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  COMPOSE_PROJECT_NAME: todo01
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.4'
+
+    - name: Install dependencies
+      run: make setup
+
+    - name: Clean up Docker volumes
+      run: docker compose down -v || true
+
+    - name: Set up MySQL
+      run: 
+        docker compose up -d mysql
+      
+    - name: Wait for MySQL to be ready
+      run: |
+        echo "Waiting for MySQL to be ready..."
+        until docker exec todo01-mysql-1 mysql -uroot -proot -e "SELECT 1;" > /dev/null 2>&1; do
+          echo "Waiting for MySQL to be ready..."
+          sleep 2
+        done
+        echo "MySQL is ready!"
+
+    - name: Add Go bin to PATH
+      run: echo "$HOME/go/bin" >> $GITHUB_PATH
+
+    - name: Generate code
+      run: make generate
+
+    - name: Build
+      run: make build
+
+    - name: Test
+      run: make test
