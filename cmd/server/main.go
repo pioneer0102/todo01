@@ -59,4 +59,5 @@ func main() {
 	}
 
 	slog.Info("Server exited properly")
+	
 }
